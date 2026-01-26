@@ -1,45 +1,75 @@
-Manager para coordinar `translator` → `minify_assets` → `html-2-pdf` (GUI + CLI)
+# ⚙️ Project Manager & Build Orchestrator
 
-Descripción
+> **Un orquestador central que automatiza tu flujo de trabajo (CI/CD local) conectando la traducción, minificación y generación de PDFs en una sola cadena de comandos.**
 
-- Interfaz mínima y CLI para orquestar la traducción, minificación y generación de PDFs del proyecto. Soporta múltiples archivos objetivo y selección automática de la versión más reciente de cada script en `dev/scripts`.
+El **Project Manager** es una herramienta híbrida (CLI + GUI) diseñada para vigilar los archivos base de tu proyecto (como `cv_data.js`). Al detectar un cambio, ejecuta automáticamente una "reacción en cadena" que actualiza todo tu ecosistema: primero traduce los textos, luego minifica los recursos y finalmente regenera los PDFs de exportación.
 
-Modos de uso
+![1769443877856](images/README/1769443877856.png)
 
-- GUI (por defecto si no pasas targets):
+## ✨ Características Principales
+
+- **👀 File Watcher Inteligente:** Monitoriza múltiples archivos en tiempo real usando hashes SHA-256 para detectar cambios precisos en el código.
+- **🧠 Auto-Descubrimiento de Scripts:** No necesitas configurar rutas estáticas. El manager busca en tus carpetas de desarrollo y detecta automáticamente la versión más reciente de tus scripts basándose en el prefijo numérico más alto (ej. elige `9_script.py` por encima de `8_script.py`).
+- **🖥️ Modo Híbrido (GUI & CLI):** Úsalo visualmente a través de su interfaz gráfica o intégralo en procesos automatizados de servidor mediante la terminal.
+- **🧵 Multihilo (Threading):** Las salidas de consola de los sub-scripts se redirigen al panel de la GUI en tiempo real sin congelar la interfaz.
+- **🛡️ Omitir Pasos Pesados:** Incluye flags como `--no-html` para saltarse la generación de PDFs cuando solo necesitas compilar código, ahorrando tiempo de CPU.
+
+---
+
+## ⚙️ Requisitos e Instalación
+
+**Requisitos del sistema:**
+
+- Python 3.8 o superior.
+- Librerías estándar de Python (`hashlib`, `threading`, `tkinter`). No requiere instalaciones externas.
+
+Asegúrate de que la estructura de carpetas mantenga la lógica base (el manager debe estar en `dev/manager/` y los scripts en `dev/scripts/`).
+
+---
+
+## 📖 Guía de Uso
+
+### 1️⃣ Modo Interfaz Gráfica (Recomendado para escritorio)
+
+Ejecuta el script sin argumentos para abrir la GUI:
 
 ```bash
 python dev/manager/manager.py
+
+    Select...: Elige uno o varios archivos a vigilar (ej. cv_data.js).
+
+    Detect Scripts: Refresca y busca las últimas versiones de tus herramientas.
+
+    Run All: Ejecuta la cadena completa manualmente una vez.
+
+    Start Watching: Inicia la vigilancia en segundo plano. Guarda un cambio en tu editor de código y verás cómo el manager hace todo el trabajo.
+
+2️⃣ Modo Terminal (Recomendado para automatización)
+
+Puedes pasar los archivos objetivo y configuraciones directamente por consola.
+
+Vigilar archivos en segundo plano (sin interfaz):
+Bash
+
+python dev/manager/manager.py js/cv_data.js js/projects-opti.js
+
+Ejecutar una sola vez y salir (Pipeline CI):
+Bash
+
+python dev/manager/manager.py js/cv_data.js --once
+
+Ejecutar todo EXCEPTO el generador de PDF:
+Bash
+
+python dev/manager/manager.py js/cv_data.js --once --no-html
+
+💡 ¿Cómo funciona la Cadena de Construcción?
+
+Cuando se detecta un cambio en un archivo objetivo, el manager ejecuta el siguiente flujo estricto:
+
+    🌐 Traductor: (translator.py) Actualiza las versiones en inglés de los archivos modificados.
+
+    ⚡ Minificador: (minify_assets.py) Comprime los nuevos JS/CSS resultantes.
+
+    📄 Generador PDF: (HTML-2-PDF-Python.py) Lanza el navegador headless para tomar "capturas" del HTML actualizado y generar los PDFs finales (Omitible con --no-html).
 ```
-
-- Botones: `Run Translator`, `Run Minify`, `Run HTML→PDF`, `Run All`.
-- `Select...` permite seleccionar múltiples archivos para vigilar (se guardan separados por `;`).
-- `Start Watching` vigila todos los targets seleccionados y ejecuta la cadena si cualquiera cambia.
-
-- CLI (watching / once) — varios targets:
-
-```bash
-python dev/manager/manager.py js/cv_data.js js/projects-opti.js --once --no-html
-```
-
-- `--once` ejecuta la cadena una vez y sale.
-- `--no-html` evita lanzar el generador HTML→PDF (útil en servidores o CI).
-
-Cómo selecciona los scripts
-
-- Busca en las carpetas de `dev/scripts` y:
-  - si hay ficheros con prefijo numérico (ej. `9_...py`) elige el de prefijo más alto;
-  - si no hay prefijos, elige `name_hint` si existe (p.ej. `translator.py`), o el más reciente por fecha.
-
-Notas técnicas
-
-- El manager detecta cambios usando hash SHA256 por archivo.
-- `Run HTML→PDF` lanza el script con `interactive=True` (se abre la GUI del generador). Usa `--no-html` para omitirlo.
-
-Ejemplo de flujo recomendado
-
-1. Abrir GUI: `python dev/manager/manager.py`.
-2. `Select...` — elegir `js/cv_data.js` y `js/projects-opti.js`.
-3. `Detect Scripts` para refrescar las rutas a los scripts.
-4. `Start Watching` o usar `Run All` para ejecutar la cadena manualmente.
-5. `Open Portfolio Updater` abre la versión más reciente de la herramienta GUI para editar datasets (`dev/scripts/portfolio-updater.py`). Útil para revisar/editar datos antes o después de la ejecución automática.
