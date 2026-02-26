@@ -1,75 +1,73 @@
 # ⚙️ Project Manager & Build Orchestrator
 
-> **Un orquestador central que automatiza tu flujo de trabajo (CI/CD local) conectando la traducción, minificación y generación de PDFs en una sola cadena de comandos.**
-
-El **Project Manager** es una herramienta híbrida (CLI + GUI) diseñada para vigilar los archivos base de tu proyecto (como `cv_data.js`). Al detectar un cambio, ejecuta automáticamente una "reacción en cadena" que actualiza todo tu ecosistema: primero traduce los textos, luego minifica los recursos y finalmente regenera los PDFs de exportación.
+This repository contains the Project Manager — a hybrid CLI + GUI orchestrator that automates a local build workflow by chaining translation, minification and PDF generation into a single pipeline.
 
 ![1769443877856](images/README/1769443877856.png)
 
-## ✨ Características Principales
+This manager watches key project files (for example `js/cv_data.js`) and, when changes are detected, runs a chained process that updates translations, minifies assets and regenerates export PDFs.
 
-- **👀 File Watcher Inteligente:** Monitoriza múltiples archivos en tiempo real usando hashes SHA-256 para detectar cambios precisos en el código.
-- **🧠 Auto-Descubrimiento de Scripts:** No necesitas configurar rutas estáticas. El manager busca en tus carpetas de desarrollo y detecta automáticamente la versión más reciente de tus scripts basándose en el prefijo numérico más alto (ej. elige `9_script.py` por encima de `8_script.py`).
-- **🖥️ Modo Híbrido (GUI & CLI):** Úsalo visualmente a través de su interfaz gráfica o intégralo en procesos automatizados de servidor mediante la terminal.
-- **🧵 Multihilo (Threading):** Las salidas de consola de los sub-scripts se redirigen al panel de la GUI en tiempo real sin congelar la interfaz.
-- **🛡️ Omitir Pasos Pesados:** Incluye flags como `--no-html` para saltarse la generación de PDFs cuando solo necesitas compilar código, ahorrando tiempo de CPU.
+[![Leer en Español](https://img.shields.io/badge/Leer%20en%20Espa%C3%B1ol-ES-blue?style=flat-square&logo=github)](README_es.md)
 
----
+## ✨ Key Features
 
-## ⚙️ Requisitos e Instalación
-
-**Requisitos del sistema:**
-
-- Python 3.8 o superior.
-- Librerías estándar de Python (`hashlib`, `threading`, `tkinter`). No requiere instalaciones externas.
-
-Asegúrate de que la estructura de carpetas mantenga la lógica base (el manager debe estar en `dev/manager/` y los scripts en `dev/scripts/`).
+- **Smart File Watcher:** Monitors multiple files in real-time using SHA-256 hashes to detect precise code changes.
+- **Auto-Discovery of Scripts:** Automatically finds the most recent helper scripts in your `dev/scripts/` folder using numeric prefixes (for example, prefers `9_script.py` over `8_script.py`).
+- **Hybrid Mode (GUI & CLI):** Use the graphical interface on desktop or integrate into automated pipelines via the terminal.
+- **Threaded Execution:** Sub-script outputs are streamed to the GUI panel without freezing the interface.
+- **Skip Heavy Steps:** Flags like `--no-html` allow skipping PDF generation when only compilation/minification is needed.
 
 ---
 
-## 📖 Guía de Uso
+## ⚙️ Requirements & Installation
 
-### 1️⃣ Modo Interfaz Gráfica (Recomendado para escritorio)
+- Python 3.8 or newer.
+- Standard Python libraries (`hashlib`, `threading`, `tkinter`). No external packages required by default.
 
-Ejecuta el script sin argumentos para abrir la GUI:
+Keep the manager in `dev/manager/` and helper scripts in `dev/scripts/` for the default discovery logic.
+
+---
+
+## 📖 Usage Guide
+
+### GUI Mode
+
+Run without arguments to open the GUI:
 
 ```bash
 python dev/manager/manager.py
-
-    Select...: Elige uno o varios archivos a vigilar (ej. cv_data.js).
-
-    Detect Scripts: Refresca y busca las últimas versiones de tus herramientas.
-
-    Run All: Ejecuta la cadena completa manualmente una vez.
-
-    Start Watching: Inicia la vigilancia en segundo plano. Guarda un cambio en tu editor de código y verás cómo el manager hace todo el trabajo.
-
-2️⃣ Modo Terminal (Recomendado para automatización)
-
-Puedes pasar los archivos objetivo y configuraciones directamente por consola.
-
-Vigilar archivos en segundo plano (sin interfaz):
-Bash
-
-python dev/manager/manager.py js/cv_data.js js/projects-opti.js
-
-Ejecutar una sola vez y salir (Pipeline CI):
-Bash
-
-python dev/manager/manager.py js/cv_data.js --once
-
-Ejecutar todo EXCEPTO el generador de PDF:
-Bash
-
-python dev/manager/manager.py js/cv_data.js --once --no-html
-
-💡 ¿Cómo funciona la Cadena de Construcción?
-
-Cuando se detecta un cambio en un archivo objetivo, el manager ejecuta el siguiente flujo estricto:
-
-    🌐 Traductor: (translator.py) Actualiza las versiones en inglés de los archivos modificados.
-
-    ⚡ Minificador: (minify_assets.py) Comprime los nuevos JS/CSS resultantes.
-
-    📄 Generador PDF: (HTML-2-PDF-Python.py) Lanza el navegador headless para tomar "capturas" del HTML actualizado y generar los PDFs finales (Omitible con --no-html).
 ```
+
+GUI actions:
+
+- **Select...**: Choose file(s) to watch (e.g. `cv_data.js`).
+- **Detect Scripts**: Refresh available helper scripts.
+- **Run All**: Execute the full chain once.
+- **Start Watching**: Begin background file watching; saving a watched file triggers the chain.
+
+### Terminal Mode
+
+Watch files in background (no GUI):
+
+```bash
+python dev/manager/manager.py js/cv_data.js js/projects-opti.js
+```
+
+Run once and exit (CI):
+
+```bash
+python dev/manager/manager.py js/cv_data.js --once
+```
+
+Run everything except PDF generation:
+
+```bash
+python dev/manager/manager.py js/cv_data.js --once --no-html
+```
+
+### Build Chain
+
+When a watched file changes, the manager runs this sequence:
+
+- 🌐 Translator: (`translator.py`) Updates language variants.
+- ⚡ Minifier: (`minify_assets.py`) Generates minified JS/CSS.
+- 📄 PDF Generator: (`HTML-2-PDF-Python.py`) Uses a headless browser to render HTML and produce optimized PDFs (skip with `--no-html`).
